@@ -117,21 +117,96 @@ Netlify te dice qué registro DNS crear. El certificado HTTPS sale automático.
 
 ## Opción 3 · GitHub (despliegue automático, lo ideal a largo plazo)
 
-Cada vez que hagas `git push`, Netlify publica solo. Ideal si vas a tocar la web
-con frecuencia.
+Cada vez que hagas `git push`, Netlify publica solo. Es la opción recomendada si vas a
+tocar la web con frecuencia, y la única que tiene **todo** (API, panel, horas libres
+reales y citas persistentes) sin pagar un servidor.
 
-1. Sube el repo a GitHub:
-   ```bash
-   git add -A
-   git commit -m "Actualización"
-   git branch -M main
-   git remote add origin https://github.com/TU_USUARIO/peluqueria-mayka.git
-   git push -u origin main
-   ```
-2. Netlify → *Add new site → Import an existing project* → elige el repo.
-3. Netlify lee el `netlify.toml` solo: build vacío, publish `public`, functions `netlify/functions`.
-4. Añade las variables de entorno en *Site configuration → Environment variables*
-   (las de la Opción 2) y haz *Clear cache and deploy site*.
+### Paso 1 · Crear el repositorio en GitHub
+
+1. Entra en [github.com/new](https://github.com/new).
+2. **Nombre:** `peluqueria-mayka` · **Visibilidad:** *Private* (Netlify lee repos
+   privados sin problema).
+3. **No marques** ninguna casilla (ni README, ni .gitignore, ni licencia).
+4. Pulsa **Create repository**.
+
+### Paso 2 · Subir el código desde tu ordenador
+
+Abre **PowerShell** y ejecuta:
+
+```powershell
+cd "C:\Users\User\Documents\Proyecto predeterminado"
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/peluqueria-mayka.git
+git push -u origin main
+```
+
+Te pedirá tu usuario y un **token personal** de GitHub (no tu contraseña):
+
+1. GitHub → foto de perfil → **Settings** → **Developer settings** →
+   **Personal access tokens** → **Tokens (classic)** → **Generate new token**.
+2. Marca `repo` → **Generate** → cópialo (sólo se ve una vez).
+3. Cuando pida el usuario: tu usuario de GitHub. Cuando pida la contraseña: **pega el token**.
+
+> Si ya habías añadido antes un remoto con otro nombre, usa
+> `git remote set-url origin ...` en lugar de `git remote add`.
+
+### Paso 3 · Conectar el repositorio a Netlify
+
+1. Entra en [app.netlify.com](https://app.netlify.com) → **Add new site** →
+   **Import an existing project**.
+2. Elige **GitHub** → busca `peluqueria-mayka` → **Continue**.
+3. Netlify detectará el `netlify.toml` y rellena solo:
+   - **Build command**: *(déjalo vacío)*
+   - **Publish directory**: `public`
+   - **Functions directory**: `netlify/functions`
+4. Pulsa **Deploy site**.
+
+Tarda 1–2 minutos. Tendrás `https://peluqueria-mayka-xxxx.netlify.app`.
+
+### Paso 4 · Variables de entorno (imprescindible)
+
+**Site configuration → Environment variables → Add a variable** → una por una:
+
+| Variable | Valor |
+|---|---|
+| `SHOP_EMAIL` | `miguelmelladoros6@gmail.com` |
+| `MAIL_MODE` | `formsubmit` |
+| `MAIL_CLIENT_COPY` | `true` |
+| `PUBLIC_URL` | `https://tu-dominio.es` |
+| `ADMIN_TOKEN` | *algo largo y privado* |
+
+Después: **Deploy site → Clear cache and deploy site**.
+
+> **Ojo:** `netlify.toml` **no** puede contener secretos (es público), por eso
+> `ADMIN_TOKEN` va aquí y no en el fichero.
+
+### Paso 5 · Dominio propio
+
+**Site configuration → Domain management → Add a custom domain** → `tu-dominio.es`.
+Netlify te indica el registro DNS que debes crear en tu proveedor de dominio.
+El certificado HTTPS se emite **automáticamente** en cuanto el DNS propaga.
+
+### Paso 6 · Publicar cambios a partir de ahora
+
+```powershell
+cd "C:\Users\User\Documents\Proyecto predeterminado"
+git add -A
+git commit -m "Cambio en la web"
+git push
+```
+
+Netlify detecta el push y publica en ~1 minuto. No hay que hacer nada más.
+
+### Si algo falla
+
+- **La web sale sin estilos:** vacía la caché del navegador (Ctrl+Shift+R) y
+  vuelve a desplegar con *Clear cache and deploy site*.
+- **El panel `/admin` no abre:** revisa que `ADMIN_TOKEN` esté en las variables de
+  entorno y que el despliegue se haya hecho *después* de añadirla.
+- **No llegan los correos:** la primera cita activa FormSubmit; revisa tu bandeja
+  y haz clic en **«Activate Form»**.
+- **La Function da error:** *Site configuration → Functions → Logs* muestra el
+  error exacto.
 
 ---
 
