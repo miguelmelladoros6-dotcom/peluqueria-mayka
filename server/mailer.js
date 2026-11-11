@@ -186,6 +186,41 @@ function copiaPermitida(email) {
   return dominiosPermitidos().includes(dominio.toLowerCase());
 }
 
+/* ---------- campos planos para FormSubmit ---------- */
+
+/*
+  FormSubmit renderiza los campos enviados como una tabla.
+  Hay que enviar campos planos y legibles (Cliente, Servicio, Fecha…),
+  nunca el HTML: si se manda el HTML, el correo muestra el código fuente.
+*/
+function camposPropietario(cita, servicio) {
+  const campos = {
+    'Cliente': cita.nombre,
+    'Teléfono': cita.telefono,
+    'Correo': cita.email || '—',
+    'Servicio': servicio ? servicio.nombre : cita.servicio,
+    'Día': fechaLegible(cita.fecha),
+    'Hora': cita.hora,
+    'Duración': (cita.duracion || '') + ' min',
+    'Referencia': cita.id
+  };
+  if (cita.notas) campos['Notas'] = cita.notas;
+  return campos;
+}
+
+function camposCliente(cita, servicio) {
+  return {
+    'Cliente': cita.nombre,
+    'Servicio': servicio ? servicio.nombre : cita.servicio,
+    'Día': fechaLegible(cita.fecha),
+    'Hora': cita.hora,
+    'Duración': (cita.duracion || '') + ' min',
+    'Referencia': cita.id,
+    'Teléfono del salón': '+34 868 70 01 05',
+    'Dirección': 'Avenida Europa nº 5, 30710 Los Alcázares (Murcia)'
+  };
+}
+
 /* ---------- transports ---------- */
 
 function smtpDisponible() {
@@ -202,13 +237,14 @@ async function enviarPorSmtp(mensaje) {
   await transporter.sendMail(mensaje);
 }
 
-async function enviarPorFormSubmit(destinatario, asunto, texto, html) {
+async function enviarPorFormSubmit(destinatario, asunto, campos) {
   const cuerpo = new URLSearchParams();
   cuerpo.set('_subject', asunto);
   cuerpo.set('_template', 'table');
   cuerpo.set('_captcha', 'false');
-  cuerpo.set('Mensaje', texto);
-  cuerpo.set('HTML', html);
+  Object.keys(campos || {}).forEach(function (clave) {
+    cuerpo.set(clave, String(campos[clave] == null ? '' : campos[clave]));
+  });
 
   const url = `https://formsubmit.co/ajax/${encodeURIComponent(destinatario)}`;
 
@@ -294,7 +330,13 @@ async function enviarCita(cita, servicio) {
   if (modo === 'formsubmit' || modo === 'auto') {
     try {
       for (const dest of destinatarios) {
-        await enviarPorFormSubmit(dest.email, asunto, texto, html);
+        const campos = dest.email === config.shopEmail
+          ? camposPropietario(cita, servicio)
+          : camposCliente(cita, servicio);
+        const asuntoDest = dest.email === config.shopEmail
+          ? asunto
+          : 'Cita reservada en Peluquería Mayka · ' + cita.fecha + ' ' + cita.hora;
+        await enviarPorFormSubmit(dest.email, asuntoDest, campos);
       }
       return { enviado: true, transporte: 'formsubmit', error: null };
     } catch (err) {
@@ -322,7 +364,7 @@ async function enviarCambioEstado(cita, servicio, estadoAnterior) {
       });
       return { enviado: true, transporte: 'smtp', error: null };
     }
-    await enviarPorFormSubmit(config.shopEmail, asunto, texto, html);
+    await enviarPorFormSubmit(config.shopEmail, asunto, camposPropietario(cita, servicio));
     return { enviado: true, transporte: 'formsubmit', error: null };
   } catch (err) {
     return { enviado: false, transporte: 'error', error: err.message };
@@ -335,6 +377,8 @@ module.exports = {
   fechaLegible,
   smtpDisponible,
   copiaPermitida,
+  camposPropietario,
+  camposCliente,
   plantillaEmail,
   textoPlano
 };

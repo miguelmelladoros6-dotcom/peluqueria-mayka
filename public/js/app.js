@@ -398,10 +398,12 @@
       email: $('#email').value.trim(),
       notas: $('#notas').value.trim(),
       servicio: estado.servicioId,
+      servicioId: estado.servicioId,
       fecha: estado.fecha,
       hora: estado.hora,
       privacidad: $('#privacidad').checked,
       origen: 'web',
+      referencia: 'pendiente',
       nombreServicio: s ? s.nombre : ''
     };
   }
@@ -498,17 +500,22 @@
 
   /* Modo estático: envío directo por FormSubmit.co al correo del salón */
   function enviarExterno(datos) {
+    var s = servicioPorId(datos.servicioId) || servicioPorId(datos.servicio);
     var cuerpo = new URLSearchParams();
-    cuerpo.set('_subject', 'Nueva cita · ' + (datos.nombreServicio || datos.servicio) + ' · ' + datos.fecha + ' ' + datos.hora);
+    cuerpo.set('_subject', 'Nueva cita · ' + (s ? s.nombre : datos.servicio) + ' · ' + datos.fecha + ' ' + datos.hora);
     cuerpo.set('_template', 'table');
     cuerpo.set('_captcha', 'false');
     cuerpo.set('Cliente', datos.nombre);
-    cuerpo.set('Telefono', datos.telefono);
-    cuerpo.set('Correo', datos.email || '');
-    cuerpo.set('Servicio', datos.nombreServicio || datos.servicio);
-    cuerpo.set('Dia', textoDia(datos.fecha));
+    cuerpo.set('Teléfono', datos.telefono);
+    cuerpo.set('Correo', datos.email || '—');
+    cuerpo.set('Servicio', s ? s.nombre : datos.servicio);
+    cuerpo.set('Día', textoDia(datos.fecha));
     cuerpo.set('Hora', datos.hora);
-    cuerpo.set('Notas', datos.notas || '');
+    cuerpo.set('Duración', (s ? s.duracion : '') + ' min');
+    cuerpo.set('Notas', datos.notas || '—');
+    cuerpo.set('Referencia', datos.referencia || '—');
+    cuerpo.set('Teléfono del salón', '+34 868 70 01 05');
+    cuerpo.set('Dirección', 'Avenida Europa nº 5, 30710 Los Alcázares (Murcia)');
 
     return fetch('https://formsubmit.co/ajax/' + encodeURIComponent(EMAIL_SALON), {
       method: 'POST',

@@ -1,6 +1,5 @@
-/*
-  Cabeceras de seguridad y caché (Netlify)
-*/
+# Cabeceras de seguridad y caché (Netlify)
+# Los comentarios en este fichero empiezan por #
 
 /*
   X-Frame-Options: SAMEORIGIN
@@ -9,10 +8,10 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
 /shared/*
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=3600, must-revalidate
 
 /css/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=0, must-revalidate
 
 /js/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=0, must-revalidate
