@@ -1,0 +1,15 @@
+[
+  {
+    "id": "ESPERA-2EB872B7",
+    "creado": "2026-11-11T13:15:18.300Z",
+    "clientName": "Ana",
+    "clientPhone": "600000000",
+    "clientEmail": "",
+    "servicioId": "corte-mujer",
+    "servicioNombre": "",
+    "fecha": "2026-11-20",
+    "horaPreferida": "",
+    "status": "waiting",
+    "notifiedAt": null
+  }
+]

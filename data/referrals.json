@@ -1,0 +1,29 @@
+[
+  {
+    "id": "REF-D1A8095D",
+    "creado": "2026-11-11T13:15:18.305Z",
+    "clientName": "Ana",
+    "clientEmail": "a@a.com",
+    "code": "ANA-DC45",
+    "credits": 0,
+    "totalEarned": 0,
+    "redemptions": []
+  },
+  {
+    "id": "REF-C83FB23C",
+    "creado": "2026-11-11T13:15:21.252Z",
+    "clientName": "Padrino",
+    "clientEmail": "padrino@x.com",
+    "code": "PADR-4D75",
+    "credits": 5,
+    "totalEarned": 5,
+    "redemptions": [
+      {
+        "referredEmail": "nuevo@x.com",
+        "amount": 5,
+        "fecha": "2026-11-11T13:15:21.259Z"
+      }
+    ],
+    "actualizado": "2026-11-11T13:15:21.259Z"
+  }
+]

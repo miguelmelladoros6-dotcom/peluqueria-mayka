@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mayka Club · Bonos, tienda y más · Peluquería Mayka</title>
+<meta name="description" content="Bonos regalo, membresías, tienda de productos y lista de espera de Peluquería Mayka en Los Alcázares.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<style>
+  .tienda { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  .tienda h1 { font-family: var(--fuente-titulo); font-size: 2.4rem; margin-bottom: 8px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 32px; }
+  .tab { padding: 10px 18px; border: 1px solid var(--linea); border-radius: 999px; background: var(--blanco); cursor: pointer; font-size: .85rem; }
+  .tab.is-activo { background: var(--tinta); color: var(--crema); border-color: var(--tinta); }
+  .panel { display: none; }
+  .panel.is-activo { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio); padding: 22px; }
+  .card h3 { margin-bottom: 6px; }
+  .precio { font-family: var(--fuente-titulo); font-size: 1.6rem; color: var(--rojo); margin: 8px 0; }
+  .form { display: grid; gap: 10px; max-width: 520px; }
+  .form input, .form select, .form textarea { padding: 10px 12px; border: 1px solid var(--linea); border-radius: var(--radio-s); font-family: inherit; }
+  .msg { padding: 12px 16px; border-radius: var(--radio-s); margin-top: 12px; font-size: .9rem; }
+  .msg.ok { background: #e7f5ec; border: 1px solid #a8d4bb; color: #2f6a4b; }
+  .msg.err { background: #fbeceb; border: 1px solid #e2b0ab; color: #93413a; }
+  .carrito { position: sticky; top: 16px; }
+  .linea { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--linea); }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="contenedor cabecera__inner">
+    <a class="marca" href="/"><span class="marca__logo">M</span><span class="marca__txt"><strong>Peluquería Mayka</strong><small>Los Alcázares</small></span></a>
+    <nav class="nav"><a href="/">Web</a><a href="/#reservar">Reservar</a></nav>
+    <div class="cabecera__acciones"><a class="btn btn--primario btn--sm" href="/#reservar">Reservar cita</a></div>
+  </div>
+</header>
+<main class="tienda">
+  <h1>Mayka Club</h1>
+  <p class="intro">Bonos regalo, membresías, tienda y lista de espera. Genera valor mientras descansas.</p>
+
+  <div class="tabs">
+    <button class="tab is-activo" data-tab="bonos">Bonos regalo</button>
+    <button class="tab" data-tab="club">Club Mayka</button>
+    <button class="tab" data-tab="tienda">Tienda</button>
+    <button class="tab" data-tab="espera">Lista de espera</button>
+    <button class="tab" data-tab="referidos">Referidos</button>
+  </div>
+
+  <!-- BONOS -->
+  <section class="panel is-activo" id="panel-bonos">
+    <h2>Bonos regalo</h2>
+    <p>Regala belleza. El importe se paga por adelantado y el bono se canjea en el salón.</p>
+    <div class="grid" id="bonos-opciones"></div>
+    <h3 style="margin-top:24px;">Comprar bono</h3>
+    <form class="form" id="formBono">
+      <select id="bonoAmount"></select>
+      <input id="bonoBuyer" placeholder="Tu nombre" required>
+      <input id="bonoBuyerEmail" type="email" placeholder="Tu email">
+      <input id="bonoRecipient" placeholder="Nombre del destinatario (opcional)">
+      <input id="bonoRecipientEmail" type="email" placeholder="Email del destinatario (opcional)">
+      <textarea id="bonoMsg" placeholder="Mensaje personal (opcional)"></textarea>
+      <select id="bonoPay">
+        <option value="manual">Transferencia bancaria</option>
+        <option value="cash">Efectivo en salón</option>
+      </select>
+      <button class="btn btn--primario" type="submit">Comprar bono</button>
+    </form>
+    <div id="bonoMsgOut"></div>
+
+    <h3 style="margin-top:32px;">Validar un bono</h3>
+    <form class="form" id="formValidarBono">
+      <input id="bonoCode" placeholder="Código del bono" required>
+      <button class="btn btn--linea" type="submit">Comprobar saldo</button>
+    </form>
+    <div id="bonoValidOut"></div>
+  </section>
+
+  <!-- CLUB -->
+  <section class="panel" id="panel-club">
+    <h2>Club Mayka (membresías)</h2>
+    <p>Suscripción mensual con servicios incluidos y descuentos. Ingreso recurrente, incluso si no vienes.</p>
+    <div class="grid" id="planesGrid"></div>
+    <h3 style="margin-top:24px;">Suscribirse</h3>
+    <form class="form" id="formClub">
+      <select id="clubPlan"></select>
+      <input id="clubNombre" placeholder="Nombre" required>
+      <input id="clubEmail" type="email" placeholder="Email" required>
+      <input id="clubTel" placeholder="Teléfono" required>
+      <button class="btn btn--primario" type="submit">Suscribirme</button>
+    </form>
+    <div id="clubOut"></div>
+  </section>
+
+  <!-- TIENDA -->
+  <section class="panel" id="panel-tienda">
+    <h2>Tienda de productos</h2>
+    <p>Productos de cuidado capilar. Añade al carrito y finaliza el pedido.</p>
+    <div class="grid" id="productosGrid"></div>
+    <div class="card carrito" style="margin-top:24px;">
+      <h3>Carrito</h3>
+      <div id="carritoLineas"></div>
+      <p><strong>Total: <span id="carritoTotal">0.00</span> €</strong></p>
+      <form class="form" id="formPedido">
+        <input id="pedNombre" placeholder="Nombre" required>
+        <input id="pedEmail" type="email" placeholder="Email">
+        <input id="pedTel" placeholder="Teléfono" required>
+        <input id="pedDir" placeholder="Dirección de envío">
+        <button class="btn btn--primario" type="submit">Finalizar pedido</button>
+      </form>
+      <div id="pedidoOut"></div>
+    </div>
+  </section>
+
+  <!-- ESPERA -->
+  <section class="panel" id="panel-espera">
+    <h2>Lista de espera</h2>
+    <p>Si no hay hueco, apúntate. Cuando se libere una cita te avisamos y recuperamos el hueco.</p>
+    <form class="form" id="formEspera">
+      <input id="espNombre" placeholder="Nombre" required>
+      <input id="espTel" placeholder="Teléfono" required>
+      <input id="espEmail" type="email" placeholder="Email">
+      <select id="espServicio"></select>
+      <input id="espFecha" type="date" required>
+      <input id="espHora" placeholder="Hora preferida (opcional)">
+      <button class="btn btn--primario" type="submit">Apuntarme</button>
+    </form>
+    <div id="esperaOut"></div>
+  </section>
+
+  <!-- REFERIDOS -->
+  <section class="panel" id="panel-referidos">
+    <h2>Programa de referidos</h2>
+    <p>Invita a tus amigas y gana crédito para el salón.</p>
+    <form class="form" id="formRefCode">
+      <input id="refNombre" placeholder="Tu nombre" required>
+      <input id="refEmail" type="email" placeholder="Tu email" required>
+      <button class="btn btn--primario" type="submit">Obtener mi código</button>
+    </form>
+    <div id="refCodeOut"></div>
+    <h3 style="margin-top:24px;">Aplicar código de una amiga</h3>
+    <form class="form" id="formRefApply">
+      <input id="refApplyCode" placeholder="Código" required>
+      <input id="refApplyEmail" type="email" placeholder="Tu email" required>
+      <button class="btn btn--linea" type="submit">Aplicar</button>
+    </form>
+    <div id="refApplyOut"></div>
+  </section>
+</main>
+
+<script>
+const API='/api';
+const carrito=[];
+function $(id){return document.getElementById(id);}
+function msg(el, text, ok){ el.innerHTML='<div class="msg '+(ok?'ok':'err')+'">'+text+'</div>'; }
+function tabs(){ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('is-activo')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('is-activo')); t.classList.add('is-activo'); document.getElementById('panel-'+t.dataset.tab).classList.add('is-activo'); })); }
+
+async function loadConfig(){
+  const r=await fetch(API+'/config'); const c=await r.json(); const rev=c.revenue||{};
+  // bonos
+  const sel=$('bonoAmount'); sel.innerHTML='';
+  (rev.giftCardAmounts||[20,30,50,75,100]).forEach(a=>{ const o=document.createElement('option'); o.value=a; o.textContent=a+' €'; sel.appendChild(o); });
+  const grid=$('bonos-opciones'); grid.innerHTML='';
+  (rev.giftCardAmounts||[]).forEach(a=>{ const d=document.createElement('div'); d.className='card'; d.innerHTML='<h3>Bono '+a+' €</h3><div class="precio">'+a+' €</div><p>Canjeable en cualquier servicio.</p>'; grid.appendChild(d); });
+  // planes
+  const pg=$('planesGrid'); pg.innerHTML='';
+  (rev.membershipPlans||[]).forEach(p=>{ const d=document.createElement('div'); d.className='card'; d.innerHTML='<h3>'+p.nombre+'</h3><div class="precio">'+p.precio+' €/mes</div><p>'+p.descripcion+'</p><small>'+p.visitasMes+' servicios/mes · '+p.descuento+'% descuento</small>'; pg.appendChild(d); });
+  const cp=$('clubPlan'); cp.innerHTML='';
+  (rev.membershipPlans||[]).forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.nombre+' — '+p.precio+' €/mes'; cp.appendChild(o); });
+  // servicios para espera
+  const ss=$('espServicio'); ss.innerHTML='<option value="">Cualquier servicio</option>';
+  (c.servicios||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.nombre; ss.appendChild(o); });
+  // bank info stored
+  window.BANK=rev;
+}
+
+async function loadProductos(){
+  const r=await fetch(API+'/productos'); const j=await r.json();
+  const g=$('productosGrid'); g.innerHTML='';
+  (j.productos||[]).forEach(p=>{
+    const d=document.createElement('div'); d.className='card';
+    d.innerHTML='<h3>'+p.nombre+'</h3><p>'+p.descripcion+'</p><div class="precio">'+Number(p.precio).toFixed(2)+' €</div><small>Stock: '+p.stock+'</small><br><button class="btn btn--linea btn--sm" data-id="'+p.id+'">Añadir</button>';
+    d.querySelector('button').addEventListener('click',()=>{ carrito.push({productId:p.id,nombre:p.nombre,precio:p.precio}); renderCarrito(); });
+    g.appendChild(d);
+  });
+}
+function renderCarrito(){
+  const el=$('carritoLineas'); el.innerHTML='';
+  let total=0;
+  carrito.forEach((c,i)=>{ total+=Number(c.precio); const row=document.createElement('div'); row.className='linea'; row.innerHTML='<span>'+c.nombre+'</span><span>'+Number(c.precio).toFixed(2)+' € <button data-i="'+i+'" style="border:none;background:none;cursor:pointer;">×</button></span>'; row.querySelector('button').addEventListener('click',()=>{ carrito.splice(i,1); renderCarrito(); }); el.appendChild(row); });
+  $('carritoTotal').textContent=total.toFixed(2);
+}
+
+// forms
+$('formBono').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const body={ amount:Number($('bonoAmount').value), buyerName:$('bonoBuyer').value, buyerEmail:$('bonoBuyerEmail').value, recipientName:$('bonoRecipient').value, recipientEmail:$('bonoRecipientEmail').value, message:$('bonoMsg').value, paymentMethod:$('bonoPay').value };
+  const r=await fetch(API+'/bonos/comprar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.ok){ msg($('bonoMsgOut'), 'Bono creado. Código: <strong>'+j.bono.code+'</strong>. Importe '+j.bono.amount+' €. '+($('bonoPay').value==='manual'?'Realiza la transferencia a '+ (window.BANK.bankIban||'') +' ('+(window.BANK.bankBeneficiary||'')+') indicando el código.':'Paga en el salón.'), true); }
+  else msg($('bonoMsgOut'), j.error||'Error', false);
+});
+$('formValidarBono').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const r=await fetch(API+'/bonos/validar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('bonoCode').value})});
+  const j=await r.json();
+  if(j.ok) msg($('bonoValidOut'),'Saldo disponible: '+j.bono.balance+' € (caduca '+j.bono.expiresAt+').',true);
+  else msg($('bonoValidOut'), j.error||'Error', false);
+});
+$('formClub').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const body={ plan:$('clubPlan').value, clientName:$('clubNombre').value, clientEmail:$('clubEmail').value, clientPhone:$('clubTel').value };
+  const r=await fetch(API+'/membresias/suscribirse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.ok) msg($('clubOut'),'Suscripción creada ('+j.membresia.planNombre+'). Te contactaremos para activar el pago.',true);
+  else msg($('clubOut'), j.error||'Error', false);
+});
+$('formPedido').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(!carrito.length){ msg($('pedidoOut'),'Carrito vacío',false); return; }
+  const body={ items:carrito.map(c=>({productId:c.productId,qty:1})), clientName:$('pedNombre').value, clientEmail:$('pedEmail').value, clientPhone:$('pedTel').value, address:$('pedDir').value };
+  const r=await fetch(API+'/pedidos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.ok){ msg($('pedidoOut'),'Pedido '+j.pedido.id+' creado. Total '+j.pedido.total+' €. Te contactaremos para el pago/envío.',true); carrito.length=0; renderCarrito(); }
+  else msg($('pedidoOut'), j.error||'Error', false);
+});
+$('formEspera').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const body={ clientName:$('espNombre').value, clientPhone:$('espTel').value, clientEmail:$('espEmail').value, servicioId:$('espServicio').value, fecha:$('espFecha').value, horaPreferida:$('espHora').value };
+  const r=await fetch(API+'/lista-espera',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.ok) msg($('esperaOut'),'Apuntado a la lista de espera. Te avisaremos cuando se libere un hueco.',true);
+  else msg($('esperaOut'), j.error||'Error', false);
+});
+$('formRefCode').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const r=await fetch(API+'/referidos/codigo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:$('refNombre').value,email:$('refEmail').value})});
+  const j=await r.json();
+  if(j.ok) msg($('refCodeOut'),'Tu código: <strong>'+j.referido.code+'</strong>. Crédito acumulado: '+j.referido.credits+' €.',true);
+  else msg($('refCodeOut'), j.error||'Error', false);
+});
+$('formRefApply').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const r=await fetch(API+'/referidos/aplicar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('refApplyCode').value,email:$('refApplyEmail').value})});
+  const j=await r.json();
+  if(j.ok) msg($('refApplyOut'),'Código aplicado. Crédito para tu amiga: '+j.credito+' €.',true);
+  else msg($('refApplyOut'), j.error||'Error', false);
+});
+
+tabs();
+loadConfig();
+loadProductos();
+</script>
+</body>
+</html>

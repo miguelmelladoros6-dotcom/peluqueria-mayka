@@ -1,0 +1,27 @@
+[
+  {
+    "id": "BONO-BB437A7E",
+    "creado": "2026-11-11T13:15:18.283Z",
+    "code": "MAYKA-5N56QN24",
+    "amount": 50,
+    "balance": 32,
+    "buyerName": "Test",
+    "buyerEmail": "t@t.com",
+    "recipientName": "Test",
+    "recipientEmail": "t@t.com",
+    "message": "",
+    "status": "active",
+    "paymentMethod": "manual",
+    "paymentRef": null,
+    "expiresAt": "2027-11-11",
+    "redemptions": [
+      {
+        "citaId": "CIT-15C4CE80",
+        "amount": 18,
+        "fecha": "2026-11-11T13:15:21.257Z"
+      }
+    ],
+    "token": "mayka-2026",
+    "actualizado": "2026-11-11T13:15:21.257Z"
+  }
+]

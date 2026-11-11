@@ -1,0 +1,24 @@
+[
+  {
+    "id": "PED-29A0FD25",
+    "creado": "2026-11-11T13:15:18.311Z",
+    "items": [
+      {
+        "productId": "PROD-686A3514",
+        "nombre": "Champú reparador",
+        "qty": 2,
+        "precio": 14.9,
+        "subtotal": 29.8
+      }
+    ],
+    "total": 29.8,
+    "clientName": "Ana",
+    "clientEmail": "",
+    "clientPhone": "600",
+    "address": "",
+    "status": "pending",
+    "paymentMethod": "manual",
+    "paymentRef": null,
+    "notas": ""
+  }
+]

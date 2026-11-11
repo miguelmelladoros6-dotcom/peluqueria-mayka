@@ -22,6 +22,19 @@ const server = http.createServer((req, res) => {
   });
 });
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error('');
+    console.error(`  El puerto ${config.port} ya está ocupado por otro proceso.`);
+    console.error('  Opciones:');
+    console.error(`    · Cierra el otro servidor:  taskkill /PID <pid> /F`);
+    console.error(`    · Usa otro puerto:         set PORT=3001 && node server/index.js`);
+    console.error('');
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(config.port, config.host, () => {
   const modoCorreo = config.mailMode === 'off'
     ? 'desactivado'

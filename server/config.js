@@ -80,7 +80,59 @@ const config = {
   slotStep: Number(process.env.SLOT_STEP || 30),
 
   /* Días hacia adelante que se pueden reservar */
-  horizonDays: Number(process.env.HORIZON_DAYS || 60)
+  horizonDays: Number(process.env.HORIZON_DAYS || 60),
+
+  /* ---------- Ingresos pasivos / revenue engine ---------- */
+  /* Depósito para confirmar cita (reduce ausencias). Modo: 'none' | 'fixed' | 'percent' */
+  depositMode: (process.env.DEPOSIT_MODE || 'fixed').toLowerCase(),
+  depositAmount: Number(process.env.DEPOSIT_AMOUNT || 10),
+  depositPercent: Number(process.env.DEPOSIT_PERCENT || 20),
+
+  /* Precios orientativos por servicio (EUR) para analítica de ingresos. */
+  preciosServicios: (function () {
+    const base = {
+      'corte-mujer': 18, 'corte-ninos': 12, 'corte-peinado': 25,
+      'peinado-ocasion': 30, 'tinte': 45, 'mechas': 60, 'balayage': 80,
+      'matiz': 25, 'rizado': 70, 'alisado': 50, 'cejas': 12, 'eventos': 120
+    };
+    const extra = process.env.PRECIOS_SERVICIOS;
+    if (extra) {
+      try {
+        const parsed = JSON.parse(extra);
+        Object.assign(base, parsed);
+      } catch (e) { /* ignore */ }
+    }
+    return base;
+  })(),
+
+  /* Bonos regalo: importes sugeridos (EUR) */
+  giftCardAmounts: [20, 30, 50, 75, 100],
+  giftCardExpiryDays: Number(process.env.GIFT_CARD_EXPIRY_DAYS || 365),
+
+  /* Crédito por referido (EUR) */
+  referralCredit: Number(process.env.REFERRAL_CREDIT || 5),
+
+  /* Comisión de no presentado (EUR) — informativa */
+  noShowFee: Number(process.env.NO_SHOW_FEE || 15),
+
+  /* Días sin visita para re-engagement */
+  reengagementDays: Number(process.env.REENGAGEMENT_DAYS || 60),
+
+  /* Planes de membresía (precios orientativos EUR/mes) */
+  membershipPlans: [
+    { id: 'basico', nombre: 'Mayka Básico', precio: 25, visitasMes: 1, descuento: 10, descripcion: '1 corte al mes + 10% en el resto de servicios.' },
+    { id: 'premium', nombre: 'Mayka Premium', precio: 45, visitasMes: 2, descuento: 15, descripcion: '2 servicios al mes a elegir + 15% en extras.' },
+    { id: 'vip', nombre: 'Mayka VIP', precio: 75, visitasMes: 3, descuento: 20, descripcion: '3 servicios al mes + 20% y prioridad de agenda.' }
+  ],
+
+  /* Stripe (opcional) */
+  stripeSecret: (process.env.STRIPE_SECRET_KEY || '').trim(),
+  stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || '').trim(),
+  stripePublishable: (process.env.STRIPE_PUBLISHABLE_KEY || '').trim(),
+
+  /* Pagos manuales (transferencia) */
+  bankIban: (process.env.BANK_IBAN || 'ES00 0000 0000 0000 0000 0000').trim(),
+  bankBeneficiary: (process.env.BANK_BENEFICIARY || 'Peluquería Mayka').trim()
 };
 
 module.exports = config;

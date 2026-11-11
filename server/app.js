@@ -13,6 +13,8 @@ const { URL } = require('url');
 
 const config = require('./config');
 const store = require('./store');
+const storage = require('./storage');
+const revenue = require('./revenue');
 const schedule = require('./schedule');
 const mailer = require('./mailer');
 const SERVICIOS = require('../public/shared/servicios');
@@ -244,6 +246,17 @@ async function apiCrearCita(req, res) {
     });
   }
 
+  /* Validación de bono regalo (si se aporta código) */
+  const codigoBono = String(datos.bonoCodigo || datos.giftcardCode || '').trim();
+  let bonoValido = null;
+  if (codigoBono) {
+    const v = await revenue.validarBono(codigoBono);
+    if (!v.ok) {
+      return json(res, 422, { ok: false, error: v.error, errores: { bono: v.error } });
+    }
+    bonoValido = v.bono;
+  }
+
   /* Comprobación real de disponibilidad (evita dobles reservas) */
   const slots = schedule.calcularSlots(
     valores.fecha,
@@ -271,6 +284,7 @@ async function apiCrearCita(req, res) {
     });
   }
 
+  const deposito = revenue.depositoPara({ servicio: valores.servicio.id });
   const cita = {
     nombre: valores.nombre,
     telefono: valores.telefono,
@@ -282,10 +296,35 @@ async function apiCrearCita(req, res) {
     hora: valores.hora,
     fin: elegido.fin,
     notas: valores.notas,
-    origen: datos.origen || 'web'
+    origen: datos.origen || 'web',
+    deposito: deposito,
+    depositoPagado: false,
+    bonoCodigo: bonoValido ? bonoValido.code : null,
+    bonoImporte: 0,
+    referralCode: String(datos.referralCode || '').trim() || null
   };
 
   const guardada = await store.add(cita);
+
+  /* Canjeo de bono regalo si se aportó */
+  if (bonoValido) {
+    const precio = revenue.precioServicio(valores.servicio.id);
+    const aCanjear = precio > 0 ? Math.min(precio, bonoValido.balance) : Math.min(10, bonoValido.balance);
+    try {
+      const r = await revenue.canjearBono(bonoValido.code, guardada.id, aCanjear);
+      if (r.ok) {
+        await store.update(guardada.id, { bonoImporte: r.importe, bonoSaldoRestante: r.saldoRestante });
+        guardada.bonoImporte = r.importe;
+      }
+    } catch (err) { console.error('[bono]', err.message); }
+  }
+
+  /* Referido: si el cliente nuevo vino por un código, acreditar al padrino */
+  if (cita.referralCode && valores.email) {
+    try {
+      await revenue.aplicarReferido(cita.referralCode, valores.email);
+    } catch (err) { console.error('[referido]', err.message); }
+  }
 
   let correo = { enviado: false, transporte: 'ninguno', error: null };
   try {
@@ -321,6 +360,8 @@ async function apiCrearCita(req, res) {
       fin: guardada.fin,
       notas: guardada.notas
     },
+    deposito: guardada.deposito || 0,
+    bonoImporte: guardada.bonoImporte || 0,
     correoEnviado: correo.enviado,
     correoTransporte: correo.transporte,
     correoError: correo.error
@@ -379,6 +420,11 @@ async function apiAdminCambio(req, res, id) {
 
   const servicio = servicioPorId(cita.servicio);
   mailer.enviarCambioEstado(cita, servicio).catch(() => {});
+
+  /* Si se cancela, notificar a la lista de espera para recuperar el hueco */
+  if (datos.estado === 'cancelada') {
+    revenue.notificarEsperaPorCancelacion(cita).catch(() => {});
+  }
 
   return json(res, 200, { ok: true, cita });
 }
@@ -482,7 +528,22 @@ async function handle(req, res) {
           hoy: schedule.today(config.timezone),
           horizonte: config.horizonDays,
           emailActivo: config.mailMode !== 'off',
-          transporte: config.mailMode
+          transporte: config.mailMode,
+          revenue: {
+            depositMode: config.depositMode,
+            depositAmount: config.depositAmount,
+            depositPercent: config.depositPercent,
+            giftCardAmounts: config.giftCardAmounts,
+            giftCardExpiryDays: config.giftCardExpiryDays,
+            referralCredit: config.referralCredit,
+            noShowFee: config.noShowFee,
+            reengagementDays: config.reengagementDays,
+            membershipPlans: config.membershipPlans,
+            stripePublishable: config.stripePublishable,
+            bankIban: config.bankIban,
+            bankBeneficiary: config.bankBeneficiary,
+            preciosServicios: config.preciosServicios
+          }
         });
       }
 
@@ -524,6 +585,210 @@ async function handle(req, res) {
       if (mCambio && (req.method === 'PATCH' || req.method === 'POST')) {
         return await apiAdminCambio(req, res, mCambio[1]);
       }
+
+      /* ---------- Revenue: público ---------- */
+      if (ruta === '/api/productos' && req.method === 'GET') {
+        await revenue.seedProductos();
+        return json(res, 200, { ok: true, productos: await storage.all('products') });
+      }
+
+      if (ruta === '/api/bonos/validar' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        const r = await revenue.validarBono(d.code);
+        return json(res, r.ok ? 200 : 404, r.ok ? { ok: true, bono: { code: r.bono.code, balance: r.bono.balance, expiresAt: r.bono.expiresAt } } : { ok: false, error: r.error });
+      }
+
+      if (ruta === '/api/bonos/comprar' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        try {
+          const bono = await revenue.crearBono(d);
+          return json(res, 201, { ok: true, bono: { id: bono.id, code: bono.code, amount: bono.amount, balance: bono.balance, expiresAt: bono.expiresAt, status: bono.status } });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      if (ruta === '/api/membresias/planes' && req.method === 'GET') {
+        return json(res, 200, { ok: true, planes: config.membershipPlans });
+      }
+
+      if (ruta === '/api/membresias/suscribirse' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        try {
+          const socio = await revenue.suscribirse(d);
+          return json(res, 201, { ok: true, membresia: socio });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      if (ruta === '/api/pedidos' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        try {
+          const pedido = await revenue.crearPedido(d);
+          return json(res, 201, { ok: true, pedido });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      if (ruta === '/api/lista-espera' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        try {
+          const e = await revenue.apuntarseEspera(d);
+          return json(res, 201, { ok: true, espera: e });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      if (ruta === '/api/referidos/codigo' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        const ref = await revenue.obtenerReferido(d.email, d.nombre);
+        return json(res, 200, { ok: true, referido: { code: ref.code, credits: ref.credits, totalEarned: ref.totalEarned } });
+      }
+
+      if (ruta === '/api/referidos/aplicar' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        const r = await revenue.aplicarReferido(d.code, d.email);
+        return json(res, r.ok ? 200 : 422, r.ok ? { ok: true, credito: r.credito, padrino: r.referrer } : { ok: false, error: r.error });
+      }
+
+      /* ---------- Revenue: admin ---------- */
+      if (ruta === '/api/admin/ingresos' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const citas = await store.all();
+        const data = await revenue.analitica(citas);
+        return json(res, 200, { ok: true, data });
+      }
+
+      if (ruta === '/api/admin/clientes' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const citas = await store.all();
+        const clientes = await revenue.clientesUnicos(citas);
+        return json(res, 200, { ok: true, clientes });
+      }
+
+      if (ruta === '/api/admin/bonos' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        return json(res, 200, { ok: true, bonos: await storage.all('giftcards') });
+      }
+
+      if (ruta === '/api/admin/bonos' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        try {
+          const bono = await revenue.crearBono(d);
+          if (d.activar) await revenue.activarBono(bono.id);
+          return json(res, 201, { ok: true, bono });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      const mBono = ruta.match(/^\/api\/admin\/bonos\/([A-Za-z0-9-]+)$/);
+      if (mBono && (req.method === 'PATCH' || req.method === 'POST')) {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const b = await storage.update('giftcards', mBono[1], d);
+        if (!b) return json(res, 404, { ok: false, error: 'Bono no encontrado.' });
+        return json(res, 200, { ok: true, bono: b });
+      }
+
+      if (ruta === '/api/admin/membresias' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        return json(res, 200, { ok: true, membresias: await storage.all('memberships') });
+      }
+
+      const mSocio = ruta.match(/^\/api\/admin\/membresias\/([A-Za-z0-9-]+)$/);
+      if (mSocio && (req.method === 'PATCH' || req.method === 'POST')) {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const s = await storage.update('memberships', mSocio[1], d);
+        if (!s) return json(res, 404, { ok: false, error: 'Socio no encontrado.' });
+        return json(res, 200, { ok: true, membresia: s });
+      }
+
+      if (ruta === '/api/admin/lista-espera' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        return json(res, 200, { ok: true, espera: await storage.all('waitlist') });
+      }
+
+      const mEspera = ruta.match(/^\/api\/admin\/lista-espera\/([A-Za-z0-9-]+)$/);
+      if (mEspera && (req.method === 'PATCH' || req.method === 'POST')) {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const w = await storage.update('waitlist', mEspera[1], d);
+        if (!w) return json(res, 404, { ok: false, error: 'Entrada no encontrada.' });
+        return json(res, 200, { ok: true, espera: w });
+      }
+
+      if (ruta === '/api/admin/pedidos' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        return json(res, 200, { ok: true, pedidos: await storage.all('orders') });
+      }
+
+      const mPedido = ruta.match(/^\/api\/admin\/pedidos\/([A-Za-z0-9-]+)$/);
+      if (mPedido && (req.method === 'PATCH' || req.method === 'POST')) {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const p = await storage.update('orders', mPedido[1], d);
+        if (!p) return json(res, 404, { ok: false, error: 'Pedido no encontrado.' });
+        return json(res, 200, { ok: true, pedido: p });
+      }
+
+      if (ruta === '/api/admin/productos' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        await revenue.seedProductos();
+        return json(res, 200, { ok: true, productos: await storage.all('products') });
+      }
+
+      if (ruta === '/api/admin/productos' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        try {
+          const p = await storage.add('products', {
+            nombre: d.nombre, descripcion: d.descripcion, precio: Number(d.precio || 0),
+            stock: Number(d.stock || 0), categoria: d.categoria || 'general', activo: d.activo !== false
+          }, 'PROD');
+          return json(res, 201, { ok: true, producto: p });
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
+      }
+
+      const mProd = ruta.match(/^\/api\/admin\/productos\/([A-Za-z0-9-]+)$/);
+      if (mProd && (req.method === 'PATCH' || req.method === 'POST')) {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const p = await storage.update('products', mProd[1], d);
+        if (!p) return json(res, 404, { ok: false, error: 'Producto no encontrado.' });
+        return json(res, 200, { ok: true, producto: p });
+      }
+
+      if (ruta === '/api/admin/referidos' && req.method === 'GET') {
+        if (!adminAutorizado(url)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        return json(res, 200, { ok: true, referidos: await storage.all('referrals') });
+      }
+
+      if (ruta === '/api/admin/reengagement' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const citas = await store.all();
+        const dormidos = revenue.clientesDormidos(citas);
+        const enviados = [];
+        for (const cl of dormidos) {
+          if (!cl.email) continue;
+          try {
+            await mailer.enviarPorFormSubmit ? null : null;
+          } catch (e) { /* ignore */ }
+          enviados.push(cl.email);
+        }
+        return json(res, 200, { ok: true, candidatos: dormidos.length, enviados: enviados.length, clientes: dormidos });
+      }
+
+      /* Exponer config de revenue en /api/config */
+      /* (se añade más abajo en apiConfig) */
 
       return json(res, 404, { ok: false, error: 'Endpoint no encontrado.' });
     }
