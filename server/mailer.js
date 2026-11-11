@@ -219,6 +219,12 @@ async function enviarPorFormSubmit(destinatario, asunto, texto, html) {
     Accept: 'application/json'
   };
   const origen = config.siteUrl || `http://localhost:${config.port}`;
+  if (!config.siteUrl) {
+    console.warn(
+      '[mailer] PUBLIC_URL no está definido: se usará "' + origen +
+      '" como Referer. Si estás en Netlify, define PUBLIC_URL con la URL del sitio.'
+    );
+  }
   cabeceras.Referer = origen + '/';
   cabeceras.Origin = origen;
 

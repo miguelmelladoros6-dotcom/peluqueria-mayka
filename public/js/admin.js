@@ -158,9 +158,13 @@
       .catch(function (err) {
         localStorage.removeItem(CLAVE_TOKEN);
         mostrarAcceso();
-        $('#avisoError').textContent = err.message +
-          ' El token se define en el archivo .env del servidor (variable ADMIN_TOKEN).';
-        $('#avisoError').hidden = false;
+        var aviso = $('#avisoError');
+        aviso.hidden = false;
+        aviso.innerHTML = 'No se pudo contactar con el servidor de citas.' +
+          (err && err.message ? ' (' + escapar(err.message) + ')' : '') +
+          '<br><br>Este panel necesita la <strong>versión completa</strong> de la web (con servidor).' +
+          ' Si la web se publicó arrastrando el ZIP, las citas te llegan igualmente ' +
+          'por correo a <strong>miguelmelladoros6@gmail.com</strong> y puedes gestionarlas desde ahí.';
       });
   }
 

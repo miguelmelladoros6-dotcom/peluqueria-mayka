@@ -1,0 +1,18 @@
+/*
+  Cabeceras de seguridad y caché (Netlify)
+*/
+
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/shared/*
+  Cache-Control: public, max-age=3600
+
+/css/*
+  Cache-Control: public, max-age=604800
+
+/js/*
+  Cache-Control: public, max-age=604800

@@ -49,13 +49,15 @@
   }
 
   function minutos(hhmm) {
-    var p = hhmm.split(':');
-    return Number(p[0]) * 60 + Number(p[1]);
+    var p = String(hhmm).split(':');
+    return Number(p[0]) * 60 + (Number(p[1]) || 0);
   }
 
-  function hora(hhmm) {
-    var m = minutos(hhmm);
-    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  /* Convierte minutos totales (540) en "09:00" */
+  function deMinutos(m) {
+    var total = Number(m);
+    if (!isFinite(total)) return '';
+    return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
   }
 
   function horasDe(iso) {
@@ -251,6 +253,12 @@
     var url = '/api/disponibilidad?fecha=' + encodeURIComponent(estado.fecha) +
               '&servicio=' + encodeURIComponent(estado.servicioId);
 
+    /* Si ya sabemos que no hay servidor (web estática), no hay que insistir */
+    if (estado.modoExterno) {
+      pintarHorasLocales(servicio);
+      return;
+    }
+
     fetch(url, { headers: { Accept: 'application/json' } })
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -282,6 +290,7 @@
       })
       .catch(function () {
         /* Modo estático: se calculan las horas del horario del salón */
+        estado.modoExterno = true;
         pintarHorasLocales(servicio);
       });
   }
@@ -296,7 +305,7 @@
       var ini = minutos(f[0]);
       var fin = minutos(f[1]);
       for (var m = ini; m + dur <= fin; m += 30) {
-        html += '<button type="button" class="hora" role="radio" aria-checked="false" data-hora="' + hora(String(m)) + '">' + hora(String(m)) + '</button>';
+        html += '<button type="button" class="hora" role="radio" aria-checked="false" data-hora="' + deMinutos(m) + '">' + deMinutos(m) + '</button>';
       }
     });
     if (!html) {

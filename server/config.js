@@ -51,8 +51,9 @@ const config = {
   /* Copia de confirmación al cliente (true/false) */
   mailClientCopy: bool(process.env.MAIL_CLIENT_COPY, true),
 
-  /* URL pública del sitio (se usa como Referer en los envíos por FormSubmit) */
-  siteUrl: (process.env.PUBLIC_URL || '').trim(),
+  /* URL pública del sitio (se usa como Referer en los envíos por FormSubmit).
+     Netlify ya publica la variable URL con la dirección del sitio. */
+  siteUrl: (process.env.PUBLIC_URL || process.env.URL || '').trim(),
 
   /* Envío de correo: smtp | formsubmit | off (auto = smtp y, si falla, formsubmit) */
   mailMode: (process.env.MAIL_MODE || 'auto').toLowerCase(),

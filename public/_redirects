@@ -1,0 +1,6 @@
+# Reglas de enrutado para Netlify (carpeta de publicación)
+# Se procesan antes que las de netlify.toml
+# El panel de gestión se sirve como /admin
+
+/admin      /admin.html      200
+/admin/     /admin.html      200
