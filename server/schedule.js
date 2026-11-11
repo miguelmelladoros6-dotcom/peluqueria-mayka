@@ -1,10 +1,10 @@
 'use strict';
 /* =============================================================
    Motor de horarios y disponibilidad.
-   Usa el horario real del negocio (shared/horarios.js) y las
+   Usa el horario real del negocio (public/shared/horarios.js) y las
    citas ya guardadas para calcular las horas libres.
    ============================================================= */
-const HORARIOS = require('../shared/horarios');
+const HORARIOS = require('../public/shared/horarios');
 
 const MINUTOS_POR_DIA = 1440;
 

@@ -1,0 +1,81 @@
+# =============================================================
+#  Configuración de Netlify · Peluquería Mayka (Los Alcázares)
+#  Panel: app.netlify.com → Add new site → Import an existing project
+# =============================================================
+
+[build]
+  # La web estática ya está hecha: no hace falta compilar nada.
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Sólo valores que no son secretos. Todo lo sensible (ADMIN_TOKEN,
+  # SMTP_PASS, PUBLIC_URL…) se define en el panel de Netlify:
+  # Site configuration → Environment variables.
+  TZ = "Europe/Madrid"
+  SHOP_EMAIL = "miguelmelladoros6@gmail.com"
+  MAIL_CLIENT_COPY = "true"
+  SMTP_HOST = "smtp.gmail.com"
+  SMTP_PORT = "587"
+  SMTP_SECURE = "false"
+  CAPACITY = "2"
+  SLOT_STEP = "30"
+  HORIZON_DAYS = "60"
+  # OJO: ADMIN_TOKEN, MAIL_MODE, SMTP_USER, SMTP_PASS y PUBLIC_URL
+  # NO van aquí: se ponen en el panel de Netlify para no publicarlos.
+
+[functions]
+  # Empaquetado con esbuild: rápido y sin instalar nada en el build.
+  node_bundler = "esbuild"
+  # La función necesita estos ficheros (catálogo de servicios y horario)
+  included_files = ["public/shared/**"]
+  # Las citas se guardan en Netlify Blobs (persisten entre reinicios)
+  external_node_modules = ["@netlify/blobs", "nodemailer"]
+
+# ------------------------------------------------------------------
+#  API → Netlify Function
+# ------------------------------------------------------------------
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# ------------------------------------------------------------------
+#  Páginas: /admin carga el panel de gestión
+# ------------------------------------------------------------------
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/"
+  to = "/admin.html"
+  status = 200
+
+# ------------------------------------------------------------------
+#  Cabeceras y compresión
+# ------------------------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/shared/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

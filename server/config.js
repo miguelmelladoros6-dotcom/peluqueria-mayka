@@ -42,7 +42,6 @@ const config = {
   host: process.env.HOST || '0.0.0.0',
 
   publicDir: path.join(ROOT, 'public'),
-  sharedDir: path.join(ROOT, 'shared'),
   dataFile: process.env.DATA_FILE
     ? path.resolve(ROOT, process.env.DATA_FILE)
     : path.join(ROOT, 'data', 'citas.json'),

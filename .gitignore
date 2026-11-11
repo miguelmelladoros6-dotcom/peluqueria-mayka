@@ -4,3 +4,4 @@ data/citas.json
 npm-debug.log*
 .DS_Store
 Thumbs.db
+.netlify/

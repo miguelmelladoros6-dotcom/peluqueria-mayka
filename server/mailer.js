@@ -159,6 +159,33 @@ function textoPlano(cita, servicio) {
   ].filter((l) => l !== null).join('\n');
 }
 
+/* Dominios a los que se permite enviar la copia de confirmación al cliente.
+   Evita que la web se use como remitente masivo de correos. */
+const DOMINIOS_POR_DEFECTO = [
+  'gmail.com', 'googlemail.com', 'hotmail.com', 'hotmail.es', 'outlook.com',
+  'outlook.es', 'live.com', 'live.es', 'msn.com', 'yahoo.com', 'yahoo.es',
+  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'protonmail.com', 'proton.me',
+  'gmx.com', 'gmx.es', 'mail.com', 'zoho.com', 'terra.com', 'tuenti.com',
+  'madrileña.com', 'madrid.es', 'telefonica.com', 'orange.es', 'movistar.es',
+  'ymail.com', 'fastmail.com', 'tutanota.com', 'loca.lt'
+];
+
+function dominiosPermitidos() {
+  const extra = String(process.env.MAIL_ALLOWED_DOMAINS || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return DOMINIOS_POR_DEFECTO.concat(extra);
+}
+
+/** ¿Se puede enviar la copia al cliente? */
+function copiaPermitida(email) {
+  if (!email) return false;
+  const dominio = String(email).split('@')[1];
+  if (!dominio) return false;
+  return dominiosPermitidos().includes(dominio.toLowerCase());
+}
+
 /* ---------- transports ---------- */
 
 function smtpDisponible() {
@@ -226,7 +253,8 @@ async function enviarCita(cita, servicio) {
   const texto = textoPlano(cita, servicio);
 
   const destinatarios = [{ email: config.shopEmail, nombre: 'Peluquería Mayka' }];
-  if (config.mailClientCopy && cita.email) {
+  const copiaCliente = config.mailClientCopy && cita.email && copiaPermitida(cita.email);
+  if (copiaCliente) {
     destinatarios.push({ email: cita.email, nombre: cita.nombre });
   }
 
@@ -300,6 +328,7 @@ module.exports = {
   enviarCambioEstado,
   fechaLegible,
   smtpDisponible,
+  copiaPermitida,
   plantillaEmail,
   textoPlano
 };

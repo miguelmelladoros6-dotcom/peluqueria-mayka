@@ -6,13 +6,11 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "dev": "node --watch server/index.js",
+    "test": "node test-function.js"
   },
   "engines": {
     "node": ">=18"
-  },
-  "optionalDependencies": {
-    "nodemailer": "^6.9.14"
   },
   "keywords": [
     "peluqueria",
@@ -20,5 +18,9 @@
     "los-alcazares",
     "murcia"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9",
+    "nodemailer": "^10.5.0"
+  }
 }

@@ -88,7 +88,7 @@ Las citas se guardan en `data/citas.json` pero no se envía ningún email.
 | `TZ` | `Europe/Madrid` | Zona horaria del negocio |
 | `SHOP_EMAIL` | `miguelmelladoros6@gmail.com` | Destino de las citas |
 | `MAIL_MODE` | `auto` | `smtp` · `formsubmit` · `auto` · `off` |
-| `MAIL_CLIENT_COPY` | `true` | Envía copia de confirmación al cliente |
+| `MAIL_CLIENT_COPY` | `true` | Envía copia de confirmación al cliente (sólo a dominios habituales: Gmail, Hotmail, Outlook…) |
 | `MAIL_FROM` | `SMTP_USER` | Remitente visible |
 | `SMTP_*` | — | Servidor SMTP (ver opción A) |
 | `PUBLIC_URL` | `http://localhost:3000` | URL pública; se usa como `Referer` en FormSubmit |
@@ -104,8 +104,8 @@ Las citas se guardan en `data/citas.json` pero no se envía ningún email.
 1. El cliente elige **servicio → día → hora** y deja sus datos.
 2. El frontend pide las horas libres a `GET /api/disponibilidad?fecha=…&servicio=…`.
 3. El servidor las calcula combinando:
-   - el horario real del salón (`shared/horarios.js`),
-   - la duración de cada servicio (`shared/servicios.js`),
+   - el horario real del salón (`public/shared/horarios.js`),
+   - la duración de cada servicio (`public/shared/servicios.js`),
    - las citas ya reservadas, respetando `CAPACITY`.
 4. `POST /api/citas` **vuelve a comprobar la disponibilidad** en el servidor (evita dobles
    reservas aunque dos personas envíen a la vez), guarda la cita y envía el email.
@@ -179,7 +179,7 @@ Detrás de Apache/Nginx, sirve con **proxy inverso a `http://127.0.0.1:3000`** y
 
 ### Sólo hosting estático (Netlify, Vercel, GitHub Pages…)
 
-Sube el contenido de `public/` **y** la carpeta `shared/` a la raíz del dominio y ya está.
+Sube el contenido de `public/` (que ya incluye la carpeta `shared/`) a la raíz del dominio y ya está.
 En ese modo la web envía las citas directamente a FormSubmit desde el navegador
 (`enviarExterno` en `public/js/app.js`), sin necesidad de servidor Node.
 
@@ -193,24 +193,34 @@ En ese modo la web envía las citas directamente a FormSubmit desde el navegador
 
 ```
 .
+├── netlify.toml          # Configuración de despliegue en Netlify
+├── netlify/functions/
+│   └── api.js            # Netlify Function con la API de citas
 ├── server/
-│   ├── index.js       # Servidor HTTP, API y ficheros estáticos (sin dependencias)
-│   ├── config.js      # Configuración y carga del .env
-│   ├── schedule.js    # Motor de horarios y disponibilidad
-│   ├── store.js       # Almacén de citas en JSON
-│   └── mailer.js      # Envío de correo (SMTP / FormSubmit) y plantillas
-├── shared/            # Datos compartidos entre servidor y navegador
-│   ├── servicios.js   # Catálogo de servicios
-│   └── horarios.js    # Horario real del salón
-├── public/
-│   ├── index.html     # Web pública
-│   ├── admin.html     # Panel de gestión de citas
-│   ├── css/           # Estilos
-│   └── js/            # Lógica del cliente
-├── data/citas.json    # Citas guardadas (se crea solo)
-├── .env.example       # Plantilla de configuración
+│   ├── app.js            # Manejador de la API (compartido Node + Netlify)
+│   ├── index.js          # Servidor HTTP de Node
+│   ├── config.js         # Configuración y carga del .env
+│   ├── schedule.js       # Motor de horarios y disponibilidad
+│   ├── store.js          # Almacén de citas (Netlify Blobs o archivo JSON)
+│   └── mailer.js         # Envío de correo (SMTP / FormSubmit) y plantillas
+├── public/               # Todo lo que sirve el navegador
+│   ├── index.html        # Web pública
+│   ├── admin.html        # Panel de gestión de citas
+│   ├── shared/           # Catálogo de servicios y horario (servidor + navegador)
+│   ├── css/              # Estilos
+│   └── js/               # Lógica del cliente
+├── data/citas.json       # Citas guardadas en servidor propio (se crea solo)
+├── .env                  # Tu configuración (no se sube a git)
+├── .env.example          # Plantilla de configuración
 └── package.json
 ```
+
+### Dónde se guardan las citas
+
+| Entorno | Almacenamiento | ¿Persiste? |
+|---|---|---|
+| Netlify Functions | Netlify Blobs | ✅ Sí |
+| Servidor Node (VPS) | `data/citas.json` | ✅ Sí |
 
 ---
 
@@ -237,8 +247,8 @@ de la ficha de **Fresha** y de las **reseñas de los clientes**:
 
 ### Personalizar el contenido
 
-- **Servicios y duración** → `shared/servicios.js` (campo `duracion` en minutos).
-- **Horario** → `shared/horarios.js` (índice 0 = domingo … 6 = sábado).
+- **Servicios y duración** → `public/shared/servicios.js` (campo `duracion` en minutos).
+- **Horario** → `public/shared/horarios.js` (índice 0 = domingo … 6 = sábado).
 - **Textos, reseñas y ficha** → `public/index.html`.
 - **Colores y tipografías** → variables CSS de `public/css/styles.css`.
 
