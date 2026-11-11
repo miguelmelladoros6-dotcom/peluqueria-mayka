@@ -371,9 +371,29 @@ async function enviarCambioEstado(cita, servicio, estadoAnterior) {
   }
 }
 
+/** Envío genérico de un texto (avisos, lista de espera, re-engagement). */
+async function enviarTexto(destinatario, asunto, texto) {
+  if (config.mailMode === 'off') return { enviado: false, transporte: 'off', error: null };
+  if (config.mailMode === 'smtp' || (config.mailMode === 'auto' && smtpDisponible())) {
+    try {
+      await enviarPorSmtp({ from: config.mailFrom || config.smtp.user, to: destinatario, subject: asunto, text: texto });
+      return { enviado: true, transporte: 'smtp', error: null };
+    } catch (err) {
+      if (config.mailMode === 'smtp') return { enviado: false, transporte: 'smtp', error: err.message };
+    }
+  }
+  try {
+    await enviarPorFormSubmit(destinatario, asunto, { Mensaje: texto });
+    return { enviado: true, transporte: 'formsubmit', error: null };
+  } catch (err) {
+    return { enviado: false, transporte: 'formsubmit', error: err.message };
+  }
+}
+
 module.exports = {
   enviarCita,
   enviarCambioEstado,
+  enviarTexto,
   fechaLegible,
   smtpDisponible,
   copiaPermitida,

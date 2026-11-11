@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingresos · Peluquería Mayka</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/admin.css">
+<style>
+  .rev-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+  .rev-tab { padding:8px 16px; border:1px solid var(--linea); border-radius:999px; background:var(--blanco); cursor:pointer; font-size:.8rem; }
+  .rev-tab.is-activo { background:var(--tinta); color:var(--crema); border-color:var(--tinta); }
+  .rev-panel { display:none; }
+  .rev-panel.is-activo { display:block; }
+  .kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px; }
+  .kpi .resumen__num { font-size:1.8rem; }
+  .formrow { display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:12px; }
+  .formrow input, .formrow select { padding:8px 10px; border:1px solid var(--linea); border-radius:var(--radio-s); }
+</style>
+</head>
+<body class="admin">
+<header class="admin__cab">
+  <div class="admin__cab-inner">
+    <div class="marca"><span class="marca__logo">M</span><span class="marca__txt"><strong>Ingresos</strong><small>Peluquería Mayka</small></span></div>
+    <div class="admin__cab-acciones">
+      <a class="btn btn--linea btn--sm" href="/admin">Citas</a>
+      <a class="btn btn--linea btn--sm" href="/" target="_blank">Web</a>
+      <button class="btn btn--primario btn--sm" id="btnSalir">Salir</button>
+    </div>
+  </div>
+</header>
+<main class="admin__main">
+  <section class="admin__acceso" id="acceso">
+    <div class="admin__acceso-caja">
+      <h1 class="admin__titulo">Acceso a ingresos</h1>
+      <form id="formAcceso" class="admin__form">
+        <label for="token">Token de acceso</label>
+        <input type="password" id="token" required>
+        <button class="btn btn--primario btn--bloque" type="submit">Entrar</button>
+      </form>
+      <p class="admin__error" id="avisoError" hidden></p>
+    </div>
+  </section>
+
+  <section id="panel" hidden>
+    <div class="rev-tabs">
+      <button class="rev-tab is-activo" data-tab="dashboard">Dashboard</button>
+      <button class="rev-tab" data-tab="bonos">Bonos</button>
+      <button class="rev-tab" data-tab="socios">Socios</button>
+      <button class="rev-tab" data-tab="pedidos">Pedidos</button>
+      <button class="rev-tab" data-tab="productos">Productos</button>
+      <button class="rev-tab" data-tab="espera">Lista espera</button>
+      <button class="rev-tab" data-tab="referidos">Referidos</button>
+      <button class="rev-tab" data-tab="clientes">Clientes</button>
+    </div>
+
+    <div class="rev-panel is-activo" id="panel-dashboard">
+      <div class="kpi" id="kpi"></div>
+      <h3>Top servicios</h3>
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Servicio</th><th>Citas</th><th>Ingresos</th></tr></thead><tbody id="topServicios"></tbody></table></div>
+      <h3 style="margin-top:24px;">Clientes dormidos</h3>
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Nombre</th><th>Email</th><th>Última visita</th></tr></thead><tbody id="dormidos"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-bonos">
+      <h3>Crear bono manual</h3>
+      <div class="formrow">
+        <input id="bAmount" type="number" placeholder="Importe €">
+        <input id="bBuyer" placeholder="Comprador">
+        <input id="bEmail" placeholder="Email">
+        <select id="bStatus"><option value="active">Activo</option><option value="pending_payment">Pendiente pago</option></select>
+        <button class="btn btn--primario btn--sm" id="bCrear">Crear</button>
+      </div>
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Código</th><th>Importe</th><th>Saldo</th><th>Estado</th><th>Comprador</th><th>Caduca</th><th>Acción</th></tr></thead><tbody id="bonosBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-socios">
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Nombre</th><th>Plan</th><th>Precio</th><th>Estado</th><th>Próximo cobro</th><th>Visitas</th><th>Acción</th></tr></thead><tbody id="sociosBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-pedidos">
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead><tbody id="pedidosBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-productos">
+      <h3>Nuevo producto</h3>
+      <div class="formrow">
+        <input id="pNombre" placeholder="Nombre">
+        <input id="pDesc" placeholder="Descripción">
+        <input id="pPrecio" type="number" step="0.01" placeholder="Precio">
+        <input id="pStock" type="number" placeholder="Stock">
+        <input id="pCat" placeholder="Categoría">
+        <button class="btn btn--primario btn--sm" id="pCrear">Crear</button>
+      </div>
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Activo</th><th>Acción</th></tr></thead><tbody id="prodBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-espera">
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Cliente</th><th>Tel</th><th>Servicio</th><th>Fecha</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="esperaBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-referidos">
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Cliente</th><th>Email</th><th>Código</th><th>Créditos</th><th>Referidos</th></tr></thead><tbody id="refBody"></tbody></table></div>
+    </div>
+
+    <div class="rev-panel" id="panel-clientes">
+      <div class="admin__tabla-wrap"><table class="admin__tabla"><thead><tr><th>Nombre</th><th>Email</th><th>Tel</th><th>Visitas</th><th>Última</th><th>Gastado</th></tr></thead><tbody id="cliBody"></tbody></table></div>
+    </div>
+  </section>
+</main>
+<script>
+const API='/api';
+let TOKEN='';
+function $(id){return document.getElementById(id);}
+function auth(){ return TOKEN; }
+async function api(path, opts){ opts=opts||{}; const h=Object.assign({'Content-Type':'application/json'}, opts.headers||{}); if(opts.method && opts.method!=='GET'){}; const url=path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(TOKEN); const r=await fetch(url, Object.assign({},opts,{headers:h})); return r.json(); }
+
+$('formAcceso').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  TOKEN=$('token').value.trim();
+  try {
+    const j=await fetch(API+'/admin/ingresos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+    if(!j.ok) throw new Error(j.error||'Token inválido');
+    $('acceso').hidden=true; $('panel').hidden=false;
+    loadAll();
+  } catch(err){ const a=$('avisoError'); a.hidden=false; a.textContent=err.message; }
+});
+$('btnSalir').addEventListener('click',()=>{ TOKEN=''; $('panel').hidden=true; $('acceso').hidden=false; });
+
+document.querySelectorAll('.rev-tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.rev-tab').forEach(x=>x.classList.remove('is-activo'));
+  document.querySelectorAll('.rev-panel').forEach(x=>x.classList.remove('is-activo'));
+  t.classList.add('is-activo');
+  document.getElementById('panel-'+t.dataset.tab).classList.add('is-activo');
+}));
+
+async function loadAll(){
+  // dashboard
+  const ing=await fetch(API+'/admin/ingresos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const d=ing.data;
+  const kpi=$('kpi');
+  kpi.innerHTML='';
+  const cards=[
+    ['Ingresos servicios 30d', d.ingresos.servicios30+' €'],
+    ['Ingresos servicios 90d', d.ingresos.servicios90+' €'],
+    ['Bonos vendidos', d.ingresos.bonos+' €'],
+    ['Tienda', d.ingresos.tienda+' €'],
+    ['MRR membresías', d.ingresos.mrr+' €'],
+    ['Total estimado', d.ingresos.totalEstimado+' €'],
+    ['Citas realizadas', d.citas.realizadas],
+    ['Tasa cancelación', d.citas.tasaCancelacion+'%'],
+    ['Tasa no-show', d.citas.tasaNoShow+'%'],
+    ['Clientes únicos', d.clientes.unicos],
+    ['Clientes dormidos', d.clientes.dormidos],
+    ['Bonos saldo pend.', d.bonos.saldoPendiente+' €'],
+  ];
+  cards.forEach(([t,v])=>{ const c=document.createElement('div'); c.className='resumen__card'; c.innerHTML='<div class="resumen__num">'+v+'</div><div class="resumen__txt">'+t+'</div>'; kpi.appendChild(c); });
+  const ts=$('topServicios'); ts.innerHTML='';
+  (d.topServicios||[]).forEach(s=>{ const tr=document.createElement('tr'); tr.innerHTML='<td>'+s.nombre+'</td><td>'+s.count+'</td><td>'+s.ingresos.toFixed(2)+' €</td>'; ts.appendChild(tr); });
+  const dm=$('dormidos'); dm.innerHTML='';
+  (d.clientesDormidos||[]).forEach(c=>{ const tr=document.createElement('tr'); tr.innerHTML='<td>'+c.nombre+'</td><td>'+ (c.email||'') +'</td><td>'+ (c.ultimaVisita||'') +'</td>'; dm.appendChild(tr); });
+
+  // bonos
+  const bj=await fetch(API+'/admin/bonos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const bb=$('bonosBody'); bb.innerHTML='';
+  (bj.bonos||[]).forEach(b=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="celda__ref">'+b.code+'</td><td>'+b.amount+'</td><td>'+b.balance+'</td><td>'+b.status+'</td><td>'+b.buyerName+'</td><td>'+b.expiresAt+'</td><td><button class="accion" data-id="'+b.id+'">Activar</button></td>';
+    tr.querySelector('button').addEventListener('click', async ()=>{
+      await fetch(API+'/admin/bonos/'+b.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN,status:'active'})});
+      loadAll();
+    });
+    bb.appendChild(tr);
+  });
+
+  // socios
+  const sj=await fetch(API+'/admin/membresias?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const sb=$('sociosBody'); sb.innerHTML='';
+  (sj.membresias||[]).forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+s.clientName+'</td><td>'+s.planNombre+'</td><td>'+s.price+'</td><td>'+s.status+'</td><td>'+s.nextBillingDate+'</td><td>'+s.visitasUsadas+'/'+s.visitasMes+'</td><td><button class="accion" data-id="'+s.id+'">Activar</button></td>';
+    tr.querySelector('button').addEventListener('click', async ()=>{
+      await fetch(API+'/admin/membresias/'+s.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN,status:'active'})});
+      loadAll();
+    });
+    sb.appendChild(tr);
+  });
+
+  // pedidos
+  const pj=await fetch(API+'/admin/pedidos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const pb=$('pedidosBody'); pb.innerHTML='';
+  (pj.pedidos||[]).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="celda__ref">'+p.id+'</td><td>'+p.clientName+'</td><td>'+p.total+' €</td><td>'+p.status+'</td><td>'+ (p.creado||'').slice(0,10) +'</td><td><button class="accion" data-id="'+p.id+'">Marcar pagado</button></td>';
+    tr.querySelector('button').addEventListener('click', async ()=>{
+      await fetch(API+'/admin/pedidos/'+p.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN,status:'paid'})});
+      loadAll();
+    });
+    pb.appendChild(tr);
+  });
+
+  // productos
+  const prj=await fetch(API+'/admin/productos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const prb=$('prodBody'); prb.innerHTML='';
+  (prj.productos||[]).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+p.nombre+'</td><td>'+p.precio+'</td><td>'+p.stock+'</td><td>'+(p.activo?'sí':'no')+'</td><td><button class="accion" data-id="'+p.id+'">Desactivar</button></td>';
+    tr.querySelector('button').addEventListener('click', async ()=>{
+      await fetch(API+'/admin/productos/'+p.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN,activo:false})});
+      loadAll();
+    });
+    prb.appendChild(tr);
+  });
+
+  // espera
+  const wj=await fetch(API+'/admin/lista-espera?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const wb=$('esperaBody'); wb.innerHTML='';
+  (wj.espera||[]).forEach(w=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+w.clientName+'</td><td>'+w.clientPhone+'</td><td>'+w.servicioId+'</td><td>'+w.fecha+'</td><td>'+w.status+'</td><td><button class="accion" data-id="'+w.id+'">Marcar avisado</button></td>';
+    tr.querySelector('button').addEventListener('click', async ()=>{
+      await fetch(API+'/admin/lista-espera/'+w.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN,status:'notified'})});
+      loadAll();
+    });
+    wb.appendChild(tr);
+  });
+
+  // referidos
+  const rj=await fetch(API+'/admin/referidos?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const rb=$('refBody'); rb.innerHTML='';
+  (rj.referidos||[]).forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r.clientName+'</td><td>'+r.clientEmail+'</td><td>'+r.code+'</td><td>'+r.credits+'</td><td>'+(r.redemptions||[]).length+'</td>';
+    rb.appendChild(tr);
+  });
+
+  // clientes
+  const cj=await fetch(API+'/admin/clientes?token='+encodeURIComponent(TOKEN)).then(r=>r.json());
+  const cb=$('cliBody'); cb.innerHTML='';
+  (cj.clientes||[]).forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+c.nombre+'</td><td>'+(c.email||'')+'</td><td>'+(c.telefono||'')+'</td><td>'+c.visitas+'</td><td>'+(c.ultimaVisita||'')+'</td><td>'+c.gastado.toFixed(2)+' €</td>';
+    cb.appendChild(tr);
+  });
+}
+
+// crear bono
+$('bCrear').addEventListener('click', async ()=>{
+  const body={ amount:Number($('bAmount').value), buyerName:$('bBuyer').value, buyerEmail:$('bEmail').value, activar: $('bStatus').value==='active' };
+  const r=await fetch(API+'/admin/bonos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(body,{token:TOKEN,status:$('bStatus').value}))});
+  const j=await r.json();
+  if(j.ok){ alert('Bono creado: '+j.bono.code); loadAll(); } else alert(j.error);
+});
+// crear producto
+$('pCrear').addEventListener('click', async ()=>{
+  const body={ token:TOKEN, nombre:$('pNombre').value, descripcion:$('pDesc').value, precio:Number($('pPrecio').value), stock:Number($('pStock').value), categoria:$('pCat').value };
+  const r=await fetch(API+'/admin/productos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j.ok){ alert('Producto creado'); loadAll(); } else alert(j.error);
+});
+</script>
+</body>
+</html>

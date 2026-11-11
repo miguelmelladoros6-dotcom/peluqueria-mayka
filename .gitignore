@@ -1,7 +1,11 @@
 node_modules/
 .env
-data/citas.json
+.netlify/
+
+# Datos en tiempo de ejecucion: NO deben subirse al repositorio
+# (contienen nombres, telefonos y correos de clientes)
+data/*.json
+
 npm-debug.log*
 .DS_Store
 Thumbs.db
-.netlify/

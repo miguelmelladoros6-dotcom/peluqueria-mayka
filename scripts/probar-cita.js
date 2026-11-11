@@ -6,7 +6,7 @@
    ============================================================= */
 'use strict';
 
-const BASE = process.argv[2] || 'http://localhost:3000';
+const BASE = process.argv[2] || 'http://127.0.0.1:3000';
 
 const cita = {
   nombre: 'Prueba de correo',

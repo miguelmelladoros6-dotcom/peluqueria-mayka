@@ -254,7 +254,38 @@ de la ficha de **Fresha** y de las **reseñas de los clientes**:
 
 ---
 
-## 9. Avisos legales
+## 8b. Motor de ingresos (genera dinero mientras duermes)
+
+La web incluye un **motor de ingresos pasivos** integrado, accesible desde
+`/tienda.html` (clientes) y `/admin-ingresos.html` (gestión):
+
+- **Bonos regalo** (`/api/bonos/*`): el cliente paga por adelantado; el bono se
+  canjea en el salón. Saldo no canjeado = ingreso puro.
+- **Club Mayka** (`/api/membresias/*`): suscripción mensual recurrente (MRR).
+  Ingreso cada mes aunque el cliente no venga.
+- **Tienda** (`/api/pedidos`, `/api/productos`): productos de cuidado capilar
+  con carrito y gestión de stock.
+- **Lista de espera** (`/api/lista-espera`): cuando se cancela una cita, el
+  hueco se ofrece al siguiente en espera (recuperación de ingresos).
+- **Referidos** (`/api/referidos/*`): cada cliente tiene un código; invitar a
+  una amiga acredita crédito al padrino (crecimiento viral de bajo coste).
+- **Depósitos** en la reserva (`DEPOSIT_MODE`, `DEPOSIT_AMOUNT`): reduce
+  ausencias y asegura caja.
+- **Analítica** (`/api/admin/ingresos`): ingresos por servicio, MRR, bonos,
+  tienda, tasa de cancelación/no-show, clientes dormidos, top servicios.
+- **Automatización** (llamar con cron externo, p. ej. cron-job.org):
+  - `POST /api/admin/recordatorios` → envía recordatorio a las citas de mañana.
+  - `POST /api/admin/reengagement` → contacta clientes sin visita en
+    `REENGAGEMENT_DAYS` días con oferta.
+  - Al cancelar una cita, la lista de espera se notifica automáticamente.
+
+Variables de entorno relevantes: `DEPOSIT_MODE`, `DEPOSIT_AMOUNT`,
+`REFERRAL_CREDIT`, `NO_SHOW_FEE`, `REENGAGEMENT_DAYS`, `GIFT_CARD_EXPIRY_DAYS`,
+`PRECIOS_SERVICIOS` (JSON), `BANK_IBAN`, `BANK_BENEFICIARY`,
+`STRIPE_SECRET_KEY` (opcional, para cobro online).
+
+## 9. Avisos legales:
+
 
 - Los datos del formulario se usan **únicamente** para gestionar la cita.
 - Los horarios pueden cambiar: conviene revisarlos cada cierto tiempo.

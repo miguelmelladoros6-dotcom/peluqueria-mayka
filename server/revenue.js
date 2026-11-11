@@ -157,10 +157,13 @@ async function notificarEsperaPorCancelacion(cita) {
   for (const w of candidatos) {
     await storage.update('waitlist', w.id, { status: 'notified', notifiedAt: new Date().toISOString() });
     notificados.push(w);
-    /* Enviar email si hay correo */
     if (w.clientEmail) {
       try {
-        await mailer.enviarPorFormSubmit ? null : null;
+        await mailer.enviarTexto(
+          w.clientEmail,
+          'Se ha liberado un hueco en Peluquería Mayka',
+          'Hola ' + w.clientName + ', se ha liberado una cita para ' + w.fecha + '. Reserva cuanto antes en la web.'
+        );
       } catch (e) { /* ignore */ }
     }
   }

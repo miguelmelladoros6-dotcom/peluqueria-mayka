@@ -411,7 +411,7 @@ async function apiAdminCambio(req, res, id) {
   if (!tokenValido(datos.token)) {
     return json(res, 401, { ok: false, error: 'Token de acceso no válido.' });
   }
-  const permitidos = ['pendiente', 'confirmada', 'cancelada', 'realizada'];
+  const permitidos = ['pendiente', 'confirmada', 'cancelada', 'realizada', 'no_presentado'];
   if (!permitidos.includes(datos.estado)) {
     return json(res, 400, { ok: false, error: 'Estado no válido.' });
   }
@@ -771,18 +771,43 @@ async function handle(req, res) {
         return json(res, 200, { ok: true, referidos: await storage.all('referrals') });
       }
 
+      if (ruta === '/api/admin/recordatorios' && req.method === 'POST') {
+        const d = await leerCuerpo(req);
+        if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
+        const citas = await store.all();
+        const manana = schedule.addDays(schedule.today(config.timezone), 1);
+        const objetivos = citas.filter((c) => c.fecha === manana && (c.estado === 'pendiente' || c.estado === 'confirmada') && c.email);
+        const enviados = [];
+        for (const c of objetivos) {
+          const servicio = servicioPorId(c.servicio);
+          try {
+            await mailer.enviarTexto(
+              c.email,
+              'Recordatorio de cita · Peluquería Mayka',
+              'Hola ' + c.nombre + ', te recordamos tu cita el ' + c.fecha + ' a las ' + c.hora + ' para ' + (servicio ? servicio.nombre : c.servicio) + '. Av. Europa 5, Los Alcázares.'
+            );
+            enviados.push(c.email);
+          } catch (e) { /* ignore */ }
+        }
+        return json(res, 200, { ok: true, fecha: manana, candidatos: objetivos.length, enviados: enviados.length });
+      }
+
       if (ruta === '/api/admin/reengagement' && req.method === 'POST') {
         const d = await leerCuerpo(req);
         if (!tokenValido(d.token)) return json(res, 401, { ok: false, error: 'Token no válido.' });
         const citas = await store.all();
-        const dormidos = revenue.clientesDormidos(citas);
+        const dormidos = await revenue.clientesDormidos(citas);
         const enviados = [];
         for (const cl of dormidos) {
           if (!cl.email) continue;
           try {
-            await mailer.enviarPorFormSubmit ? null : null;
+            await mailer.enviarTexto(
+              cl.email,
+              'Te echamos de menos en Peluquería Mayka',
+              'Hola ' + cl.nombre + ', hace tiempo que no te vemos. Reserva tu próxima cita con un 10% de descuento.'
+            );
+            enviados.push(cl.email);
           } catch (e) { /* ignore */ }
-          enviados.push(cl.email);
         }
         return json(res, 200, { ok: true, candidatos: dormidos.length, enviados: enviados.length, clientes: dormidos });
       }
