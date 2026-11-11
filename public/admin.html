@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestión de citas · Peluquería Mayka</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin">
+
+<header class="admin__cab">
+  <div class="admin__cab-inner">
+    <div class="marca">
+      <span class="marca__logo" aria-hidden="true">M</span>
+      <span class="marca__txt">
+        <strong>Gestión de citas</strong>
+        <small>Peluquería Mayka · Los Alcázares</small>
+      </span>
+    </div>
+    <div class="admin__cab-acciones">
+      <a class="btn btn--linea btn--sm" href="/" target="_blank" rel="noopener">Ver la web</a>
+      <a class="btn btn--linea btn--sm" id="btnIcs" href="#" download>Descargar .ics</a>
+      <button class="btn btn--primario btn--sm" id="btnSalir">Salir</button>
+    </div>
+  </div>
+</header>
+
+<main class="admin__main">
+  <section class="admin__acceso" id="acceso">
+    <div class="admin__acceso-caja">
+      <h1 class="admin__titulo">Acceso al panel</h1>
+      <p class="admin__intro">Introduce el token de gestión para ver y confirmar las citas que llegan por la web.</p>
+      <form id="formAcceso" class="admin__form">
+        <label for="token">Token de acceso</label>
+        <input type="password" id="token" placeholder="••••••••" autocomplete="current-password" required>
+        <button class="btn btn--primario btn--bloque" type="submit">Entrar</button>
+      </form>
+      <p class="admin__error" id="avisoError" hidden></p>
+      <p class="admin__ayuda">El token se define en el archivo <code>.env</code> del servidor (variable <code>ADMIN_TOKEN</code>).
+        Por defecto es <code>mayka-2026</code>; cámbialo antes de publicar la web.</p>
+    </div>
+  </section>
+
+  <section id="panel" hidden>
+    <div class="admin__aviso" id="avisoCorreo" hidden></div>
+
+    <div class="admin__resumen" id="resumen"></div>
+
+    <div class="admin__filtros">
+      <button class="filtro is-activo" data-filtro="todas">Todas</button>
+      <button class="filtro" data-filtro="pendiente">Pendientes</button>
+      <button class="filtro" data-filtro="confirmada">Confirmadas</button>
+      <button class="filtro" data-filtro="realizada">Realizadas</button>
+      <button class="filtro" data-filtro="cancelada">Canceladas</button>
+    </div>
+
+    <div class="admin__tabla-wrap">
+      <table class="admin__tabla">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Cliente</th>
+            <th>Servicio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="citasBody"></tbody>
+      </table>
+      <p class="admin__vacio" id="vacio" hidden>No hay citas registradas todavía.</p>
+    </div>
+  </section>
+</main>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

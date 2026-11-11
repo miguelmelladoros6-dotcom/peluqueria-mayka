@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+data/citas.json
+README.md
+DEPLOY.md
+*.md
+.DS_Store
